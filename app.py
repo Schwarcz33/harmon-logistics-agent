@@ -3,74 +3,87 @@ import os
 from google import genai
 from google.genai import types
 from elevenlabs.client import ElevenLabs
+from streamlit_mic_recorder import speech_to_text
 
 # --- 🔐 SECURITY ---
 os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 ELEVENLABS_API_KEY = st.secrets["ELEVENLABS_API_KEY"]
 
-# --- 🧠 SELF-HEALING BRAIN CONFIG ---
+# --- 🧠 BRAIN CONFIG ---
 MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
 VOICE_ID = "0NgMq4gSzOuPcjasSGQk" # Paul Harmon
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-# --- 🎨 UI CONFIGURATION (THE VISUAL UPGRADE) ---
+# --- 🎨 UI OVERHAUL (THE VIOLET THEME) ---
 st.set_page_config(page_title="Harmon Logistics", page_icon="🚛", layout="wide")
 
-# Custom CSS to force Dark Mode, rounded corners, and "Violet" branding
 st.markdown("""
 <style>
-    /* 1. MAIN BACKGROUND */
+    /* 1. BACKGROUND GRADIENT (Cosmic Theme) */
     .stApp {
-        background-color: #0E1117;
-        color: #FAFAFA;
+        background: linear-gradient(to bottom right, #050505, #1a0b2e);
+        color: #E0E0E0;
     }
-    
-    /* 2. SIDEBAR */
+
+    /* 2. SIDEBAR STYLE */
     section[data-testid="stSidebar"] {
-        background-color: #161B22;
-        border-right: 1px solid #30363D;
+        background-color: #0a0a0a;
+        border-right: 1px solid #2D1B4E;
     }
-    
-    /* 3. CHAT BUBBLES */
+
+    /* 3. GLOWING BUTTONS */
+    div.stButton > button {
+        background: linear-gradient(90deg, #8A2BE2, #4B0082);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        transition: all 0.3s ease;
+    }
+    div.stButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(138, 43, 226, 0.8);
+    }
+
+    /* 4. CHAT BUBBLES (Modern Look) */
     .stChatMessage {
-        background-color: #161B22;
-        border: 1px solid #30363D;
-        border-radius: 15px;
+        border-radius: 20px;
         padding: 15px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     /* User Bubble (Violet) */
     .stChatMessage[data-testid="user-message"] {
-        background-color: #2D1B4E; /* Dark Violet */
-        border: 1px solid #8A2BE2; /* Bright Violet Border */
+        background: linear-gradient(135deg, #2D1B4E, #1a0b2e);
+        border-left: 5px solid #8A2BE2;
     }
-    /* AI Bubble (Dark Grey/Gold Accent) */
+    /* AI Bubble (Dark Grey/Gold) */
     .stChatMessage[data-testid="assistant-message"] {
-        background-color: #0D1117;
-        border-left: 4px solid #FFD700; /* Gold Bar */
+        background-color: #161B22;
+        border-left: 5px solid #FFD700;
     }
 
-    /* 4. BUTTONS */
-    .stButton button {
-        background-color: #8A2BE2; /* Violet */
+    /* 5. INPUT FIELD */
+    .stTextInput input {
+        background-color: #161B22;
         color: white;
-        border-radius: 8px;
-        border: none;
-        font-weight: bold;
-    }
-    .stButton button:hover {
-        background-color: #7B1FA2; /* Darker Violet */
+        border: 1px solid #8A2BE2;
+        border-radius: 15px;
     }
     
-    /* 5. HIDE STREAMLIT BRANDING */
+    /* 6. HIDE HEADER/FOOTER */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
+# --- FUNCTIONS ---
 def text_to_speech(text):
     try:
         audio_generator = voice_client.text_to_speech.convert(
@@ -80,7 +93,7 @@ def text_to_speech(text):
             output_format="mp3_44100_128",
         )
         return b"".join(audio_generator)
-    except Exception as e:
+    except:
         return None
 
 def get_gemini_response(prompt, sys_instruct):
@@ -94,62 +107,63 @@ def get_gemini_response(prompt, sys_instruct):
             return response.text
         except:
             continue
-    return "Connection Error. Please try again."
+    return "Connection Error."
 
 # --- 🖥️ SIDEBAR ---
 with st.sidebar:
-    # Use a local image or URL for the logo if you have one
-    st.image("https://cdn-icons-png.flaticon.com/512/7626/7626666.png", width=60)
-    st.markdown("### **CONTROL TOWER**")
+    st.image("https://cdn-icons-png.flaticon.com/512/7626/7626666.png", width=80)
+    st.markdown("### **HARMON DISPATCH**")
+    st.caption("📍 Landsdale HQ | 🟢 Online")
     st.markdown("---")
-    st.info("🟢 **System Status:** ONLINE")
+    
+    st.markdown("### 🎙️ **Push to Talk**")
+    # THE RELIABLE MIC (Styled by CSS above)
+    voice_input = speech_to_text(
+        language='en', 
+        start_prompt="🔴 RECORD", 
+        stop_prompt="⏹️ SEND", 
+        just_once=False,
+        use_container_width=True
+    )
     st.markdown("---")
-    st.caption("© 2026 Harmon Transportation")
+    st.info("💡 **Pro Tip:** Ask about heavy haulage or remote deliveries.")
 
 # --- 🚛 MAIN INTERFACE ---
 st.title("🚛 Harmon Transport Agent")
-st.markdown("**CEO: Paul Harmon** | *24/7 Operations*")
+st.markdown("**CEO: Paul Harmon**")
 st.markdown("---")
 
-# Initialize Chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Chat History
+# Display History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# --- 🎤 NEW AUDIO INPUT (Cleaner UI) ---
-# This puts the mic right next to the chat bar
-audio_value = st.audio_input("Record voice message")
+# --- 🤖 LOGIC ---
+user_prompt = None
+if voice_input:
+    user_prompt = voice_input
+elif chat_input := st.chat_input("Type message here..."):
+    user_prompt = chat_input
 
-if audio_value:
-    # 1. User sent audio -> We pretend it's text for now (Since we don't have Whisper set up yet)
-    # TRICK: To keep it simple without adding Whisper costs, we ask user to type OR 
-    # if you want real transcription, we need one more API key. 
-    # FOR NOW: Let's stick to TEXT input or MIC-RECORDER styled better.
-    # Actually, let's use the OLD recorder but styled, because the new one requires Whisper.
-    st.warning("Voice received! (Transcription disabled to save costs - using text below)")
+if user_prompt:
+    st.chat_message("user").markdown(user_prompt)
+    st.session_state.messages.append({"role": "user", "content": user_prompt})
 
-# --- ⌨️ CHAT INPUT ---
-if prompt := st.chat_input("Message Paul Harmon..."):
-    # 1. User Message
-    st.chat_message("user").markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
-
-    # 2. System Instruction
     sys_instruct = """
     ROLE: You are Paul Harmon, Owner of Harmon Transportation.
     TONE: Professional, Aussie, Direct, Capable.
-    FACTS: 24/7 Service, Up to 24 Tonnes, FMP/JMP Safety, No price quotes without details.
+    FACTS: 
+    - 24/7 Service, Up to 24 Tonnes, FMP/JMP Safety.
+    - Pricing: Per-km rate. NO hidden fees.
+    - Philosophy: "We don't wait for a full load. We go."
     """
     
-    # 3. AI Response
-    with st.spinner("Paul is typing..."):
-        bot_reply = get_gemini_response(prompt, sys_instruct)
+    with st.spinner("Connecting..."):
+        bot_reply = get_gemini_response(user_prompt, sys_instruct)
 
-    # 4. Display & Speak
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
         audio_bytes = text_to_speech(bot_reply)
