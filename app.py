@@ -12,56 +12,55 @@ except:
     st.error("🚨 Secrets Error. Please check API keys.")
     st.stop()
 
-# --- 🧠 BRAIN (Now with Memory) ---
+# --- 🧠 BRAIN (Paul Harmon - Logic Corrected) ---
 def get_gemini_response(current_prompt, history):
-    # 1. We format the history so the AI remembers the context
-    context_text = ""
+    chat_log = ""
     for msg in history:
-        role = "User" if msg["role"] == "user" else "Paul"
-        context_text += f"{role}: {msg['content']}\n"
+        role = "Client" if msg["role"] == "user" else "Paul"
+        chat_log += f"{role}: {msg['content']}\n"
     
-    # 2. Add the new message
-    full_prompt = f"{context_text}\nUser: {current_prompt}\nPaul:"
-
-    # 3. Enhanced Instructions to stop repetition
     sys_instruct = """
-    ROLE: You are Paul Harmon, Owner of Harmon Transportation.
-    TONE: Professional, Aussie, Direct.
+    ROLE: You are Paul Harmon (40 years old), the Owner of Harmon Transportation.
     
-    RULES:
-    1. You are in the middle of a conversation.
-    2. DO NOT start every sentence with "G'day" or your name.
-    3. DO NOT repeat facts (Wangara/Safety) if you just said them.
-    4. Keep answers conversational and short (1-2 sentences).
+    YOUR STORY:
+    - You are a local owner-operator based in Wangara, WA.
+    - You started this business because you saw firsthand the massive productivity losses on mine sites when they have to wait 7 days for a single part.
+    - You created Harmon Transportation to solve that gap with a 24/7 "Hot Shot" service.
     
-    FACTS (Use only if asked): HQ Wangara, 24T Capacity, 24/7 Service, FMP/JMP Safety.
+    FLEET & CAPABILITY:
+    - We handle anything from 1 Tonne Utes/Vans up to 24 Tonne Semi Trailers.
+    - AIR FREIGHT: Available 24/7 nationwide for the most urgent cases.
+    - "ONE HOSE POLICY": We don't wait for a full load. If you need one hose, we go NOW. 
+    
+    SAFETY & PRICING:
+    - 100% FMP (Fatigue Management) and JMP (Journey Management) compliant.
+    - Safety is the #1 priority for our staff and your freight.
+    - Pricing: Straightforward per-km rate. No hidden fuel levies.
+    
+    YOUR STYLE:
+    - Tone: Aussie, direct, professional, "Can-Do". 
+    - You've got no overheads of a big corporate, so you pass those savings to the customer.
+    - Keep answers short and punchy. Read the history to avoid repeating your name or intro.
     """
 
-    # 4. Try Models (v1beta for 3.0 Preview)
-    models = ["gemini-2.0-flash", "gemini-1.5-flash"]
+    full_prompt = f"SYSTEM:\n{sys_instruct}\n\nCHAT HISTORY:\n{chat_log}\n\nClient: {current_prompt}\nPaul:"
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    headers = {'Content-Type': 'application/json'}
+    data = {"contents": [{"parts": [{"text": full_prompt}]}]}
     
-    for model in models:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        headers = {'Content-Type': 'application/json'}
-        data = {
-            "contents": [{"parts": [{"text": full_prompt}]}],
-            "system_instruction": {"parts": [{"text": sys_instruct}]}
-        }
-        
-        try:
-            response = requests.post(url, headers=headers, json=data)
-            if response.status_code == 200:
-                return response.json()['candidates'][0]['content']['parts'][0]['text']
-            else:
-                continue
-        except:
-            continue
-            
-    return "Radio interference. Say again?"
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 200:
+            return response.json()['candidates'][0]['content']['parts'][0]['text']
+        else:
+            return f"System Error {response.status_code}: {response.text}"
+    except Exception as e:
+        return f"Connection Failed: {str(e)}"
 
 # --- 🔊 VOICE ---
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-VOICE_ID = "0NgMq4gSzOuPcjasSGQk" # Paul Harmon
+VOICE_ID = "0NgMq4gSzOuPcjasSGQk" 
 
 def text_to_speech(text):
     try:
@@ -72,7 +71,7 @@ def text_to_speech(text):
     except:
         return None
 
-# --- 🎨 UI: DARK MODERN WIDGET ---
+# --- 🎨 UI ---
 st.set_page_config(page_title="Harmon Dispatch", page_icon="🚛", layout="centered")
 
 st.markdown("""
@@ -82,9 +81,8 @@ st.markdown("""
     .header-container {
         background-color: #161B22; padding: 20px; border-radius: 15px;
         border: 1px solid #30363D; text-align: center; margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
-    .header-title { color: #FFD700; font-family: sans-serif; font-weight: 800; font-size: 26px; margin: 0; text-transform: uppercase; }
+    .header-title { color: #FFD700; font-family: sans-serif; font-weight: 800; font-size: 26px; text-transform: uppercase; }
     .contact-footer { margin-top: 30px; padding: 15px; border-top: 1px solid #30363D; text-align: center; font-size: 13px; color: #8b949e; }
     .stChatMessage { background-color: #161B22; border: 1px solid #30363D; border-radius: 15px; }
     .stChatMessage[data-testid="user-message"] { background-color: #1F6FEB; color: white; border: none; }
@@ -129,8 +127,7 @@ if user_prompt:
         st.chat_message("user").markdown(user_prompt)
         st.session_state.messages.append({"role": "user", "content": user_prompt})
 
-    # PASS THE HISTORY TO THE BRAIN
-    with st.spinner("Paul is typing..."):
+    with st.spinner("..."):
         bot_reply = get_gemini_response(user_prompt, st.session_state.messages)
 
     with st.chat_message("assistant"):
