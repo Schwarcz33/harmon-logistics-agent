@@ -16,7 +16,7 @@ except:
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 def get_gemini_response(prompt, sys_instruct):
-    # We use the standard model which is most reliable
+    # Using the standard reliable model
     model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=sys_instruct)
     try:
         response = model.generate_content(prompt)
@@ -40,10 +40,9 @@ def text_to_speech(text):
 # --- 🎨 UI: DARK MODERN WIDGET ---
 st.set_page_config(page_title="Harmon Dispatch", page_icon="🚛", layout="centered")
 
-# Custom CSS for "Dark Glass" Card Look
 st.markdown("""
 <style>
-    /* 1. MAIN BACKGROUND (Deep Dark) */
+    /* 1. BACKGROUND */
     .stApp {
         background-color: #0E1117;
         color: #E0E0E0;
@@ -63,7 +62,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
     .header-title {
-        color: #FFD700; /* Harmon Yellow */
+        color: #FFD700;
         font-family: sans-serif;
         font-weight: 800;
         font-size: 26px;
@@ -71,7 +70,7 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    /* 4. CONTACT FOOTER (The Missing Piece) */
+    /* 4. CONTACT FOOTER */
     .contact-footer {
         margin-top: 30px;
         padding: 15px;
@@ -92,7 +91,7 @@ st.markdown("""
         border-radius: 15px;
     }
     .stChatMessage[data-testid="user-message"] {
-        background-color: #1F6FEB; /* Blue */
+        background-color: #1F6FEB;
         color: white;
         border: none;
     }
@@ -123,7 +122,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🚛 WIDGET HEADER ---
+# --- 🚛 HEADER ---
 st.markdown("""
 <div class="header-container">
     <div class="header-title">🚛 HARMON TRANSPORT</div>
@@ -131,14 +130,13 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- SESSION STATE ---
+# --- STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # --- 👋 WELCOME ---
 if not st.session_state.messages:
     st.markdown("<div style='text-align: center; margin-bottom: 20px; opacity: 0.8;'>Paul Harmon is listening. How can we move your freight?</div>", unsafe_allow_html=True)
-    
     c1, c2 = st.columns(2)
     with c1:
         if st.button("📦 Get a Quote"):
@@ -147,7 +145,7 @@ if not st.session_state.messages:
         if st.button("⚡ Urgent Hot Shot"):
             st.session_state.messages.append({"role": "user", "content": "I have an urgent hot shot delivery."})
 
-# --- 📜 CHAT HISTORY ---
+# --- 📜 HISTORY ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -155,16 +153,13 @@ for message in st.session_state.messages:
 # --- ⌨️ INPUT ---
 input_container = st.container()
 with input_container:
-    # Voice Button
     voice_input = speech_to_text(
         language='en', start_prompt="🎙️ PUSH TO TALK", stop_prompt="⏹️ SEND", just_once=False, key="voice_btn", use_container_width=True
     )
-    # Text Input
     chat_input = st.chat_input("Type message here...")
 
 # --- 🧠 LOGIC ---
 user_prompt = None
-# Check for button click
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user" and len(st.session_state.messages) % 2 != 0:
     user_prompt = st.session_state.messages[-1]["content"]
 
@@ -181,12 +176,8 @@ if user_prompt:
     sys_instruct = """
     ROLE: You are Paul Harmon, Owner of Harmon Transportation.
     TONE: Professional, Aussie, Direct.
-    CONTEXT: You are a chat widget. Keep answers SHORT (1-2 sentences).
-    FACTS: 
-    - HQ: Wangara, WA.
-    - Capacity: Up to 24 Tonnes.
-    - Service: 24/7 Hot Shots.
-    - Safety: FMP/JMP compliant.
+    CONTEXT: Widget chat. Keep it SHORT.
+    FACTS: HQ Wangara, 24T Capacity, 24/7 Service, FMP/JMP Safety.
     """
     
     with st.spinner("Paul is typing..."):
@@ -200,7 +191,7 @@ if user_prompt:
 
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-# --- 📍 CONTACT FOOTER (Always Visible at Bottom) ---
+# --- 📍 FOOTER ---
 st.markdown("""
 <div class="contact-footer">
     <div class="contact-item">📍 <b>Wangara HQ:</b> 2/11 Uppill Pl, Wangara WA 6065</div>
