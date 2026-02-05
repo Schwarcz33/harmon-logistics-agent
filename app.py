@@ -109,17 +109,14 @@ def get_gemini_response(prompt, sys_instruct):
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/7626/7626666.png", width=80)
     st.markdown("### **DISPATCH CENTRE**")
-    st.caption("📍 Wangara HQ | 🟢 Online")
+    st.markdown("**Wangara HQ**")
+    st.caption("2/11 Uppill Pl, Wangara WA 6065")
     st.markdown("---")
     
-    st.markdown("### 🎙️ **RADIO CHECK**")
-    voice_input = speech_to_text(
-        language='en', 
-        start_prompt="🔴 TRANSMIT", 
-        stop_prompt="⏹️ OVER", 
-        just_once=False,
-        use_container_width=True
-    )
+    st.markdown("### 📞 **CONTACT**")
+    st.markdown("**Paul Harmon**")
+    st.markdown("📧 `paul@harmontransportation.com.au`")
+    st.markdown("📱 `0456 198 939`")
     st.markdown("---")
     st.warning("⚠️ **SAFETY FIRST**\n\nEnsure FMP/JMP compliance before booking.")
 
