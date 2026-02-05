@@ -9,54 +9,60 @@ try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
     ELEVENLABS_API_KEY = st.secrets["ELEVENLABS_API_KEY"]
 except:
-    st.error("🚨 Secrets Error. Please check API keys.")
+    st.error("🚨 Secrets Error. Please check API keys in Streamlit Cloud.")
     st.stop()
 
-# --- 🧠 BRAIN (Paul Harmon - Logic Corrected) ---
+# --- 🧠 BRAIN (Gemini 3.0 Flash - Paul Harmon Personality) ---
 def get_gemini_response(current_prompt, history):
     chat_log = ""
     for msg in history:
         role = "Client" if msg["role"] == "user" else "Paul"
         chat_log += f"{role}: {msg['content']}\n"
     
+    # Restored full Harmon Transportation Intelligence
     sys_instruct = """
     ROLE: You are Paul Harmon (40 years old), the Owner of Harmon Transportation.
     
-    YOUR STORY:
-    - You are a local owner-operator based in Wangara, WA.
-    - You started this business because you saw firsthand the massive productivity losses on mine sites when they have to wait 7 days for a single part.
-    - You created Harmon Transportation to solve that gap with a 24/7 "Hot Shot" service.
+    IDENTITY & STORY:
+    - Based in Wangara, WA. You started this because mine sites were losing money waiting 7 days for one part.
+    - You are a local owner-operator, not a corporate suit.
     
-    FLEET & CAPABILITY:
-    - We handle anything from 1 Tonne Utes/Vans up to 24 Tonne Semi Trailers.
-    - AIR FREIGHT: Available 24/7 nationwide for the most urgent cases.
-    - "ONE HOSE POLICY": We don't wait for a full load. If you need one hose, we go NOW. 
+    CAPABILITIES & FLEET:
+    - 1T Utes/Vans, 3T, 5T, 8T Trucks, up to 24T Semi Trailers.
+    - 24/7 Hot Shot Perth services for time-critical transport.
+    - "ONE HOSE POLICY": You deliver even if it's just one part, ASAP. No waiting for full loads.
+    - 24/7 Urgent Air Freight nationwide.
     
-    SAFETY & PRICING:
+    SAFETY & SERVICE:
     - 100% FMP (Fatigue Management) and JMP (Journey Management) compliant.
-    - Safety is the #1 priority for our staff and your freight.
-    - Pricing: Straightforward per-km rate. No hidden fuel levies.
+    - Point-to-point delivery with no detours or stops.
+    - Simple per-km pricing. No hidden fuel levies.
     
-    YOUR STYLE:
-    - Tone: Aussie, direct, professional, "Can-Do". 
-    - You've got no overheads of a big corporate, so you pass those savings to the customer.
-    - Keep answers short and punchy. Read the history to avoid repeating your name or intro.
+    STYLE:
+    - Aussie, direct, "Can-Do" attitude.
+    - SHORT responses (1-2 sentences). 
+    - Check the HISTORY below. If you already said hi, don't do it again.
     """
 
-    full_prompt = f"SYSTEM:\n{sys_instruct}\n\nCHAT HISTORY:\n{chat_log}\n\nClient: {current_prompt}\nPaul:"
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    headers = {'Content-Type': 'application/json'}
-    data = {"contents": [{"parts": [{"text": full_prompt}]}]}
+    # TARGETING THE NEW MODELS DIRECTLY
+    models = ["gemini-3-flash-preview", "gemini-2.0-flash"]
     
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.json()['candidates'][0]['content']['parts'][0]['text']
-        else:
-            return f"System Error {response.status_code}: {response.text}"
-    except Exception as e:
-        return f"Connection Failed: {str(e)}"
+    for model_name in models:
+        # v1beta is required for the newest models
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+        headers = {'Content-Type': 'application/json'}
+        payload = {
+            "contents": [{"parts": [{"text": f"INSTRUCTIONS: {sys_instruct}\n\nHISTORY:\n{chat_log}\n\nClient: {current_prompt}\nPaul:"}]}]
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code == 200:
+                return response.json()['candidates'][0]['content']['parts'][0]['text']
+        except:
+            continue
+            
+    return "Dispatch is lagging. Say again?"
 
 # --- 🔊 VOICE ---
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
@@ -71,7 +77,7 @@ def text_to_speech(text):
     except:
         return None
 
-# --- 🎨 UI ---
+# --- 🎨 UI: THE DARK WIDGET ---
 st.set_page_config(page_title="Harmon Dispatch", page_icon="🚛", layout="centered")
 
 st.markdown("""
@@ -127,7 +133,7 @@ if user_prompt:
         st.chat_message("user").markdown(user_prompt)
         st.session_state.messages.append({"role": "user", "content": user_prompt})
 
-    with st.spinner("..."):
+    with st.spinner("Paul is typing..."):
         bot_reply = get_gemini_response(user_prompt, st.session_state.messages)
 
     with st.chat_message("assistant"):
