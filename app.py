@@ -6,8 +6,12 @@ from elevenlabs.client import ElevenLabs
 from streamlit_mic_recorder import speech_to_text
 
 # --- 🔐 SECURITY ---
-os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
-ELEVENLABS_API_KEY = st.secrets["ELEVENLABS_API_KEY"]
+try:
+    os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
+    ELEVENLABS_API_KEY = st.secrets["ELEVENLABS_API_KEY"]
+except:
+    st.error("🚨 CRITICAL ERROR: API Keys are missing in Secrets!")
+    st.stop()
 
 # --- 🧠 BRAIN CONFIG ---
 MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
@@ -30,19 +34,19 @@ st.markdown("""
     /* 2. SIDEBAR (Dark Grey) */
     section[data-testid="stSidebar"] {
         background-color: #111111;
-        border-right: 2px solid #FFD700; /* Yellow Border */
+        border-right: 2px solid #FFD700;
     }
 
     /* 3. BUTTONS (Safety Yellow) */
     div.stButton > button {
-        background-color: #FFD700; /* Harmon Yellow */
-        color: #000000; /* Black Text */
-        border: 2px solid #FF0000; /* Red Border */
+        background-color: #FFD700;
+        color: #000000;
+        border: 2px solid #FF0000;
         padding: 12px 24px;
-        border-radius: 8px; /* Industrial Square edges */
+        border-radius: 8px;
         font-weight: 900;
         text-transform: uppercase;
-        box-shadow: 0 4px 0 #b30000; /* 3D Red Effect */
+        box-shadow: 0 4px 0 #b30000;
     }
     div.stButton > button:hover {
         background-color: #FFEA00;
@@ -51,22 +55,20 @@ st.markdown("""
     }
 
     /* 4. CHAT BUBBLES */
-    /* User Bubble (Red) */
     .stChatMessage[data-testid="user-message"] {
-        background-color: #3d0000; /* Dark Red */
-        border-left: 5px solid #FF0000; /* Bright Red Bar */
+        background-color: #3d0000;
+        border-left: 5px solid #FF0000;
         color: #ffffff;
     }
-    /* AI Bubble (Black/Yellow) */
     .stChatMessage[data-testid="assistant-message"] {
-        background-color: #1a1a1a; /* Dark Grey */
-        border-left: 5px solid #FFD700; /* Yellow Bar */
+        background-color: #1a1a1a;
+        border-left: 5px solid #FFD700;
         color: #ffffff;
     }
 
-    /* 5. TITLES & HEADERS */
+    /* 5. TITLES */
     h1, h2, h3 {
-        color: #FFD700 !important; /* Yellow Text */
+        color: #FFD700 !important;
         font-family: 'Arial Black', sans-serif;
     }
     
@@ -105,14 +107,12 @@ def get_gemini_response(prompt, sys_instruct):
 
 # --- 🖥️ SIDEBAR ---
 with st.sidebar:
-    # Use the Official Harmon Logo URL if you have it, otherwise a Truck Icon
     st.image("https://cdn-icons-png.flaticon.com/512/7626/7626666.png", width=80)
     st.markdown("### **DISPATCH CENTRE**")
-    st.caption("📍 Wangara HQ | 🟢 Online")  # <--- FIXED HERE
+    st.caption("📍 Wangara HQ | 🟢 Online")
     st.markdown("---")
     
     st.markdown("### 🎙️ **RADIO CHECK**")
-    # THE MIC
     voice_input = speech_to_text(
         language='en', 
         start_prompt="🔴 TRANSMIT", 
@@ -131,6 +131,42 @@ st.markdown("---")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display History
 for message in st.session_state.messages:
-    with st.chat_message
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# --- 🤖 LOGIC ---
+user_prompt = None
+if voice_input:
+    user_prompt = voice_input
+elif chat_input := st.chat_input("Enter log details..."):
+    user_prompt = chat_input
+
+if user_prompt:
+    st.chat_message("user").markdown(user_prompt)
+    st.session_state.messages.append({"role": "user", "content": user_prompt})
+
+    sys_instruct = """
+    ROLE: You are Paul Harmon, Owner of Harmon Transportation.
+    
+    YOUR STYLE: 
+    - You are a mining logistics veteran. Direct, reliable, 'Can-Do'.
+    - You use terms like: "Hot Shot", "copy that", "no dramas", "load out".
+    
+    FACTS: 
+    - HQ: Wangara, WA.
+    - 24/7 Service, Up to 24 Tonnes.
+    - Safety is #1 (FMP/JMP).
+    - Pricing: Per-km rate.
+    """
+    
+    with st.spinner("Radioing Paul..."):
+        bot_reply = get_gemini_response(user_prompt, sys_instruct)
+
+    with st.chat_message("assistant"):
+        st.markdown(bot_reply)
+        audio_bytes = text_to_speech(bot_reply)
+        if audio_bytes:
+            st.audio(audio_bytes, format="audio/mp3", autoplay=True)
+
+    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
