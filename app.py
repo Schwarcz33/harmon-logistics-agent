@@ -1,5 +1,4 @@
 import streamlit as st
-import os
 import requests
 import json
 from elevenlabs.client import ElevenLabs
@@ -13,25 +12,35 @@ except:
     st.error("🚨 Secrets Error. Please check API keys.")
     st.stop()
 
-# --- 🧠 BRAIN (The Direct Line) ---
-# We bypass the library and hit the API directly. This works with your Restricted Key.
+# --- 🧠 BRAIN (Gemini 3.0 Flash) ---
 def get_gemini_response(prompt, sys_instruct):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # We try Gemini 3.0 Flash first (The latest), then 2.0 Flash as backup.
+    models = [
+        "gemini-3-flash-preview",  # The Bleeding Edge
+        "gemini-2.0-flash",        # The Reliable Standard
+    ]
     
-    headers = {'Content-Type': 'application/json'}
-    data = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "system_instruction": {"parts": [{"text": sys_instruct}]}
-    }
-    
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.json()['candidates'][0]['content']['parts'][0]['text']
-        else:
-            return f"Radio Error {response.status_code}: {response.text}"
-    except Exception as e:
-        return f"Connection Failed: {str(e)}"
+    for model in models:
+        # Direct API Call to v1beta (Required for Preview models)
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        headers = {'Content-Type': 'application/json'}
+        data = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "system_instruction": {"parts": [{"text": sys_instruct}]}
+        }
+        
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            if response.status_code == 200:
+                # Success!
+                return response.json()['candidates'][0]['content']['parts'][0]['text']
+            else:
+                # If 404/Error, try the next model
+                continue
+        except:
+            continue
+            
+    return "System Error. Dispatch Offline."
 
 # --- 🔊 VOICE ---
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
