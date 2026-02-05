@@ -20,68 +20,93 @@ VOICE_ID = "0NgMq4gSzOuPcjasSGQk" # Paul Harmon
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-# --- 🎨 UI: CLEAN MODERN WIDGET ---
+# --- 🎨 UI: DARK MODERN WIDGET ---
 st.set_page_config(page_title="Harmon Dispatch", page_icon="🚛", layout="centered")
 
-# Custom CSS to force the "Clean White Widget" look
+# Custom CSS for "Dark Glass" Card Look
 st.markdown("""
 <style>
-    /* 1. BACKGROUND: Clean White/Grey */
+    /* 1. MAIN BACKGROUND (Deep Dark) */
     .stApp {
-        background-color: #F8F9FA;
-        color: #202124;
+        background-color: #0E1117;
+        color: #FAFAFA;
     }
     
-    /* 2. HIDE SIDEBAR (We want a focused widget) */
+    /* 2. HIDE SIDEBAR */
     section[data-testid="stSidebar"] {display: none;}
 
-    /* 3. HEADER STYLE */
+    /* 3. HEADER CARD */
     .header-container {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
+        background-color: #161B22;
+        padding: 25px;
+        border-radius: 20px;
+        border: 1px solid #30363D;
         text-align: center;
-        border-bottom: 3px solid #0056b3; /* Harmon Blue Accent */
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
-    .status-dot {
-        height: 10px; width: 10px; 
-        background-color: #28a745; 
-        border-radius: 50%; 
+    .header-title {
+        color: #FFD700; /* Harmon Yellow */
+        font-family: sans-serif;
+        font-weight: 800;
+        font-size: 24px;
+        margin: 0;
+    }
+    .status-badge {
+        background-color: #1F6FEB;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
         display: inline-block;
-        margin-right: 5px;
+        margin-top: 10px;
     }
 
-    /* 4. CHAT BUBBLES (iMessage Style) */
+    /* 4. CHAT BUBBLES (Dark & Sleek) */
     .stChatMessage {
-        background-color: white;
-        border: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border-radius: 20px;
+        background-color: #161B22;
+        border: 1px solid #30363D;
+        border-radius: 18px;
     }
+    /* User: Dark Blue Tint */
     .stChatMessage[data-testid="user-message"] {
-        background-color: #E8F0FE; /* Light Blue */
+        background-color: #1a1a2e; 
+        border: 1px solid #2d2d44;
+        color: #E6EDF3;
+    }
+    /* AI: Dark Grey */
+    .stChatMessage[data-testid="assistant-message"] {
+        background-color: #161B22;
+        border: 1px solid #30363D;
+        color: #E6EDF3;
     }
     
-    /* 5. SUGGESTION BUTTONS (Pills) */
+    /* 5. SUGGESTION PILLS (Dark Mode) */
     div.stButton > button {
-        background-color: white;
-        color: #444;
-        border: 1px solid #ddd;
+        background-color: #21262D;
+        color: #E6EDF3;
+        border: 1px solid #30363D;
         border-radius: 20px;
-        padding: 10px 20px;
-        font-size: 14px;
         width: 100%;
         transition: all 0.2s;
     }
     div.stButton > button:hover {
-        border-color: #0056b3;
-        color: #0056b3;
-        background-color: #f0f7ff;
+        border-color: #FFD700;
+        color: #FFD700;
+        background-color: #30363D;
     }
     
-    /* 6. HIDE JUNK */
+    /* 6. INPUT FIELD (Clean Dark) */
+    .stTextInput input {
+        background-color: #0D1117;
+        color: white;
+        border: 1px solid #30363D;
+        border-radius: 12px;
+    }
+    
+    /* 7. HIDE JUNK */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -109,13 +134,11 @@ def get_gemini_response(prompt, sys_instruct):
             continue
     return "Connection Error."
 
-# --- 🚛 HEADER (THE "BOSS IS ONLINE" CARD) ---
+# --- 🚛 WIDGET HEADER ---
 st.markdown("""
 <div class="header-container">
-    <h2 style="margin:0; color:#202124;">🚛 Harmon Transport</h2>
-    <div style="color:#666; font-size:14px; margin-top:5px;">
-        <span class="status-dot"></span>Boss is Online | 24/7 Operations
-    </div>
+    <div class="header-title">🚛 HARMON TRANSPORT</div>
+    <div class="status-badge">● 24/7 Operations Online</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -123,77 +146,62 @@ st.markdown("""
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- 👋 WELCOME SCREEN (Only if chat is empty) ---
+# --- 👋 WELCOME (Dark Mode) ---
 if not st.session_state.messages:
-    st.markdown("<div style='text-align: center; margin-top: 40px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-    st.image("https://cdn-icons-png.flaticon.com/512/2040/2040520.png", width=60) # Chat Icon
-    st.markdown("### Connect with Harmon Dispatch")
-    st.caption("Tell me where it's going and what it weighs. I'll give you my best price.")
+    st.markdown("<div style='text-align: center; margin-top: 20px; margin-bottom: 30px; opacity: 0.8;'>", unsafe_allow_html=True)
+    st.markdown("##### Connect with Dispatch")
+    st.caption("Paul Harmon is listening. What are we moving today?")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Suggestion Pills
+    # Quick Action Pills
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📦 Deliver a 400kg pallet?"):
-            st.session_state.messages.append({"role": "user", "content": "Can you deliver a 400kg pallet?"})
-            # Trigger reload to process message immediately would require rerun, 
-            # but for simplicity we let the user hit enter or handle logic below.
-            # Actually, let's auto-process in next loop if we could, but Streamlit is simple.
-            # We will just prepopulate input or treat as sent.
-            pass 
+        if st.button("📦 Quote a Pallet"):
+            st.session_state.messages.append({"role": "user", "content": "I need a quote for a pallet delivery."})
     with col2:
-        if st.button("⚡ Urgent pickup price?"):
-            st.session_state.messages.append({"role": "user", "content": "What's the price for an urgent pickup?"})
-            pass
+        if st.button("⚡ Urgent Hot Shot"):
+            st.session_state.messages.append({"role": "user", "content": "I need an urgent hot shot delivery."})
 
-# --- 📜 CHAT HISTORY ---
+# --- 📜 HISTORY ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# --- ⌨️ & 🎙️ INPUT AREA ---
-# Create a container for the input controls
+# --- ⌨️ INPUT AREA ---
 input_container = st.container()
-
 with input_container:
-    # 1. Voice Button (Styled Minimal)
+    # Voice Button (Small & Dark)
     voice_input = speech_to_text(
-        language='en', start_prompt="🎙️", stop_prompt="⏹️", just_once=False, key="voice_btn"
+        language='en', start_prompt="🎙️ PUSH TO TALK", stop_prompt="⏹️ SEND AUDIO", just_once=False, key="voice_btn", use_container_width=True
     )
+    # Text Input
+    chat_input = st.chat_input("Enter details...")
 
-    # 2. Text Input
-    chat_input = st.chat_input("Type your load details...")
-
-# --- 🧠 LOGIC ENGINE ---
+# --- 🧠 LOGIC ---
 user_prompt = None
-# Check if a button was clicked (added to history above) or voice/text input
+# Check for button click (from welcome screen)
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user" and len(st.session_state.messages) % 2 != 0:
-    # This catches the button clicks from the welcome screen
     user_prompt = st.session_state.messages[-1]["content"]
-    # Remove it momentarily so we don't double add, or just let the logic below handle "new" response
-    # Actually, simpler logic:
-    
+
 if voice_input:
     user_prompt = voice_input
 elif chat_input:
     user_prompt = chat_input
 
-# Logic to process the prompt
 if user_prompt:
-    # If it wasn't already in history (button click adds it, inputs don't yet), add it
+    # Prevent double-posting if it came from a button
     if not st.session_state.messages or st.session_state.messages[-1]["content"] != user_prompt:
         st.chat_message("user").markdown(user_prompt)
         st.session_state.messages.append({"role": "user", "content": user_prompt})
 
-    # Paul's Brain
     sys_instruct = """
     ROLE: You are Paul Harmon, Owner of Harmon Transportation.
-    TONE: Friendly, Professional, 'Can-Do'. 
-    CONTEXT: You are in a chat widget on a website. Keep answers short and punchy.
+    TONE: Professional, Aussie, Direct.
+    CONTEXT: Chat widget. Keep it short.
     FACTS: Wangara HQ, 24 Tonne Capacity, 24/7 Service.
     """
     
-    with st.spinner("..."):
+    with st.spinner("Paul is typing..."):
         bot_reply = get_gemini_response(user_prompt, sys_instruct)
 
     with st.chat_message("assistant"):
