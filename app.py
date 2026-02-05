@@ -12,35 +12,52 @@ except:
     st.error("🚨 Secrets Error. Please check API keys.")
     st.stop()
 
-# --- 🧠 BRAIN (Gemini 3.0 Flash) ---
-def get_gemini_response(prompt, sys_instruct):
-    # We try Gemini 3.0 Flash first (The latest), then 2.0 Flash as backup.
-    models = [
-        "gemini-3-flash-preview",  # The Bleeding Edge
-        "gemini-2.0-flash",        # The Reliable Standard
-    ]
+# --- 🧠 BRAIN (Now with Memory) ---
+def get_gemini_response(current_prompt, history):
+    # 1. We format the history so the AI remembers the context
+    context_text = ""
+    for msg in history:
+        role = "User" if msg["role"] == "user" else "Paul"
+        context_text += f"{role}: {msg['content']}\n"
+    
+    # 2. Add the new message
+    full_prompt = f"{context_text}\nUser: {current_prompt}\nPaul:"
+
+    # 3. Enhanced Instructions to stop repetition
+    sys_instruct = """
+    ROLE: You are Paul Harmon, Owner of Harmon Transportation.
+    TONE: Professional, Aussie, Direct.
+    
+    RULES:
+    1. You are in the middle of a conversation.
+    2. DO NOT start every sentence with "G'day" or your name.
+    3. DO NOT repeat facts (Wangara/Safety) if you just said them.
+    4. Keep answers conversational and short (1-2 sentences).
+    
+    FACTS (Use only if asked): HQ Wangara, 24T Capacity, 24/7 Service, FMP/JMP Safety.
+    """
+
+    # 4. Try Models (v1beta for 3.0 Preview)
+    models = ["gemini-2.0-flash", "gemini-1.5-flash"]
     
     for model in models:
-        # Direct API Call to v1beta (Required for Preview models)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
         headers = {'Content-Type': 'application/json'}
         data = {
-            "contents": [{"parts": [{"text": prompt}]}],
+            "contents": [{"parts": [{"text": full_prompt}]}],
             "system_instruction": {"parts": [{"text": sys_instruct}]}
         }
         
         try:
             response = requests.post(url, headers=headers, json=data)
             if response.status_code == 200:
-                # Success!
                 return response.json()['candidates'][0]['content']['parts'][0]['text']
             else:
-                # If 404/Error, try the next model
                 continue
         except:
             continue
             
-    return "System Error. Dispatch Offline."
+    return "Radio interference. Say again?"
 
 # --- 🔊 VOICE ---
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
@@ -112,10 +129,9 @@ if user_prompt:
         st.chat_message("user").markdown(user_prompt)
         st.session_state.messages.append({"role": "user", "content": user_prompt})
 
-    sys_instruct = "ROLE: You are Paul Harmon, Owner of Harmon Transportation. TONE: Professional, Aussie, Direct. CONTEXT: Widget chat. Keep it SHORT. FACTS: HQ Wangara, 24T Capacity, 24/7 Service, FMP/JMP Safety."
-    
+    # PASS THE HISTORY TO THE BRAIN
     with st.spinner("Paul is typing..."):
-        bot_reply = get_gemini_response(user_prompt, sys_instruct)
+        bot_reply = get_gemini_response(user_prompt, st.session_state.messages)
 
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
