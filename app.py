@@ -1,6 +1,7 @@
 import streamlit as st
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from elevenlabs.client import ElevenLabs
 from streamlit_mic_recorder import speech_to_text
 
@@ -12,22 +13,28 @@ except:
     st.error("🚨 Secrets Error. Please check API keys.")
     st.stop()
 
-# --- 🧠 BRAIN (Classic Stable Version) ---
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-def get_gemini_response(prompt, sys_instruct):
-    # Using the standard reliable model
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=sys_instruct)
-    try:
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"System Error: {str(e)}"
-
-# --- 🔊 VOICE ---
-voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+# --- 🧠 BRAIN (Self-Healing Modern Version) ---
+# This list ensures if one model is busy/missing, it tries the next one.
+MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
 VOICE_ID = "0NgMq4gSzOuPcjasSGQk" # Paul Harmon
 
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+
+def get_gemini_response(prompt, sys_instruct):
+    for model in MODELS_TO_TRY:
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=types.GenerateContentConfig(system_instruction=sys_instruct)
+            )
+            return response.text
+        except:
+            continue
+    return "I'm having trouble connecting to the network. Please try again in a moment."
+
+# --- 🔊 VOICE ---
 def text_to_speech(text):
     try:
         audio_generator = voice_client.text_to_speech.convert(
