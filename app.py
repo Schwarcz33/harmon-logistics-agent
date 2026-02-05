@@ -13,9 +13,9 @@ except:
     st.error("🚨 Secrets Error. Please check API keys.")
     st.stop()
 
-# --- 🧠 BRAIN (Self-Healing Modern Version) ---
-# This list ensures if one model is busy/missing, it tries the next one.
-MODELS_TO_TRY = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"]
+# --- 🧠 BRAIN (Modern Self-Healing Version) ---
+# We try multiple models to ensure one always works
+MODELS_TO_TRY = ["gemini-1.5-flash", "gemini-2.0-flash-lite"]
 VOICE_ID = "0NgMq4gSzOuPcjasSGQk" # Paul Harmon
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
