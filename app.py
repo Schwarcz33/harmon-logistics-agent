@@ -20,7 +20,7 @@ VOICE_ID = "0NgMq4gSzOuPcjasSGQk" # Paul Harmon
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-# --- 🎨 UI OVERHAUL (YELLOW/RED/BLACK) ---
+# --- 🎨 UI OVERHAUL (Harmon Corporate Theme) ---
 st.set_page_config(page_title="Harmon Logistics", page_icon="🚛", layout="wide")
 
 st.markdown("""
@@ -105,7 +105,7 @@ def get_gemini_response(prompt, sys_instruct):
             continue
     return "Connection Error. Radio silence."
 
-# --- 🖥️ SIDEBAR ---
+# --- 🖥️ SIDEBAR (CONTROL TOWER) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/7626/7626666.png", width=80)
     st.markdown("### **DISPATCH CENTRE**")
@@ -117,6 +117,17 @@ with st.sidebar:
     st.markdown("**Paul Harmon**")
     st.markdown("📧 `paul@harmontransportation.com.au`")
     st.markdown("📱 `0456 198 939`")
+    st.markdown("---")
+    
+    st.markdown("### 🎙️ **RADIO CHECK**")
+    # THIS is the missing variable that caused the crash
+    voice_input = speech_to_text(
+        language='en', 
+        start_prompt="🔴 TRANSMIT", 
+        stop_prompt="⏹️ OVER", 
+        just_once=False,
+        use_container_width=True
+    )
     st.markdown("---")
     st.warning("⚠️ **SAFETY FIRST**\n\nEnsure FMP/JMP compliance before booking.")
 
@@ -134,6 +145,8 @@ for message in st.session_state.messages:
 
 # --- 🤖 LOGIC ---
 user_prompt = None
+
+# Now this will work because 'voice_input' exists again!
 if voice_input:
     user_prompt = voice_input
 elif chat_input := st.chat_input("Enter log details..."):
