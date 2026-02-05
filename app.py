@@ -1,29 +1,37 @@
 import streamlit as st
 import os
-import google.generativeai as genai
+import requests
+import json
 from elevenlabs.client import ElevenLabs
 from streamlit_mic_recorder import speech_to_text
 
 # --- 🔐 SECURITY ---
 try:
-    os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
     ELEVENLABS_API_KEY = st.secrets["ELEVENLABS_API_KEY"]
 except:
     st.error("🚨 Secrets Error. Please check API keys.")
     st.stop()
 
-# --- 🧠 BRAIN (Classic Stable Version) ---
-# This matches your "Generative Language API" restriction perfectly.
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
+# --- 🧠 BRAIN (The Direct Line) ---
+# We bypass the library and hit the API directly. This works with your Restricted Key.
 def get_gemini_response(prompt, sys_instruct):
-    # We use 1.5-flash which is fast, stable, and works with your key
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=sys_instruct)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    headers = {'Content-Type': 'application/json'}
+    data = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "system_instruction": {"parts": [{"text": sys_instruct}]}
+    }
+    
     try:
-        response = model.generate_content(prompt)
-        return response.text
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 200:
+            return response.json()['candidates'][0]['content']['parts'][0]['text']
+        else:
+            return f"Radio Error {response.status_code}: {response.text}"
     except Exception as e:
-        return f"Connection Error: {str(e)}"
+        return f"Connection Failed: {str(e)}"
 
 # --- 🔊 VOICE ---
 voice_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
